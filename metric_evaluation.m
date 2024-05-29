@@ -55,16 +55,16 @@ voxel_distance = 0.1; % sample distance in meter
         workspace_cube_ori(2)-workspace_cube_length:voxel_distance:workspace_cube_ori(2)+workspace_cube_length,...
         workspace_cube_ori(3)-workspace_cube_length:voxel_distance:workspace_cube_ori(3)+workspace_cube_length);
 n_voxel = size(x_voxel,1)*size(y_voxel,2)*size(z_voxel,3);
-% figure(101)
-% for i = 1:size(x_voxel,1)
-%     for j = 1: size(y_voxel,2)
-%         for k = 1:size(z_voxel,3)
-%             x_cube_i = [x_voxel(i,j,k);y_voxel(i,j,k);z_voxel(i,j,k)];
-%             plot3(x_cube_i(1),x_cube_i(2),x_cube_i(3),'.')
-%             hold on
-%         end
-%     end
-% end
+figure(101)
+for i = 1:size(x_voxel,1)
+    for j = 1: size(y_voxel,2)
+        for k = 1:size(z_voxel,3)
+            x_cube_i = [x_voxel(i,j,k);y_voxel(i,j,k);z_voxel(i,j,k)];
+            plot3(x_cube_i(1),x_cube_i(2),x_cube_i(3),'.')
+            hold on
+        end
+    end
+end
 
 % generate a lookup table 
 dataset_voxel_pos_table = zeros(n_voxel,3);
@@ -152,7 +152,7 @@ for i = 1:size(dataset_voxel_pos_table,1)
             end
 
             % Jacobian
-            Jacobian_sub = model.getJacobian_point_sub(1,coord_list );
+            Jacobian_sub = model.getJacobian_mp_sub(1,coord_list );
             dataset{i,j,k}.J = Jacobian_sub; % 6xn_q
             dataset{i,j,k}.J_rank = rank(Jacobian_sub);
             
@@ -172,6 +172,11 @@ for i = 1:size(dataset_voxel_pos_table,1)
 
 
             % metric calculation
+            
+            % metric 1
+
+            % metric 2
+
             
 
         end
