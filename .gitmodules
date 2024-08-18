@@ -1,0 +1,3 @@
+[submodule "src/external/OpenSimToolbox"]
+	path = src/external/OpenSimToolbox
+	url = https://github.com/Junnan-Li/OpenSimToolbox
