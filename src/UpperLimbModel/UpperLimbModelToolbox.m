@@ -55,7 +55,7 @@ classdef UpperLimbModelToolbox < IUpperLimbModel
         function T = forwardKinematics(obj, q)
             obj.model.set_coordinate_value(obj.coord_list,q);
             [~, w_p, w_R] = obj.model.get_mp_frame(1);
-            T = zeros(4,4);
+            T = eye(4);
             T(1:3,1:3) = w_R;
             T(1:3,4) = w_p;
         end
