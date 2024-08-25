@@ -1,0 +1,6 @@
+[submodule "src/external/OpenSimToolbox"]
+	path = src/external/OpenSimToolbox
+	url = https://github.com/Junnan-Li/OpenSimToolbox
+[submodule "src/external/matlab-progressbar-collection"]
+	path = src/external/matlab-progressbar-collection
+	url = https://github.com/hwyao/matlab-progressbar-collection
