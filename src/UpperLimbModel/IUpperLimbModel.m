@@ -18,20 +18,20 @@ classdef IUpperLimbModel < handle
         %     jacobian - the jacobian matrix of the robot.
         jacobian = getGeometricJacobian(obj, q)
 
-        % CHECKVALIDITY check the validity of the 
-        %isValid = checkValidity(obj, q)
+        % CHECKVALIDITY check the validity of a single solution q 
+        isValid = checkValidity(obj, q)
 
         % numeric inverse kinematics
-        
+        [q, isValid] = inverseKinematics(obj, T, qInit, options)
 
         % nullspace angle
-
-
-        % nullspace motion step
+        [angle, posList] = nullspaceAngle(obj, q)
         
-
-        % do a full round of motion
-
+        % self motion
+        [qArray, stateArray] = selfMotionManifold(obj, qInit, options)
+        
+        % numeric inverse kinematics with all solutions
+        [qArray, stateArray] = inverseKinematicsWithManifold(obj, T, qInit)
     end
 end
 
