@@ -121,14 +121,36 @@ classdef UpperLimbModelToolbox < IUpperLimbModel
             isValid = obj.checkValidity(q);
         end
 
+        function [TShoulder, TElbow, TWrist, TEE] = armPoseReferencePosition(obj, q)
+            obj.setConfiguration(q);
+
+            pShoulder = osimVec3ToArray(obj.model.BodySet.get('scapphant').getPositionInGround(obj.model.state));
+            RShoulder = osimMatrix2matrix(obj.model.BodySet.get('scapphant').getRotationInGround(obj.model.state));
+            TShoulder = eye(4);
+            TShoulder(1:3, 4) = pShoulder;
+            TShoulder(1:3, 1:3) = RShoulder;
+            pElbow = osimVec3ToArray(obj.model.BodySet.get('ulna').getPositionInGround(obj.model.state));
+            RElbow = osimMatrix2matrix(obj.model.BodySet.get('ulna').getRotationInGround(obj.model.state));
+            TElbow = eye(4);
+            TElbow(1:3, 4) = pElbow;
+            TElbow(1:3, 1:3) = RElbow;
+            pWrist = osimVec3ToArray(obj.model.BodySet.get('proximal_row').getPositionInGround(obj.model.state));
+            RWrist = osimMatrix2matrix(obj.model.BodySet.get('proximal_row').getRotationInGround(obj.model.state));
+            TWrist = eye(4);
+            TWrist(1:3, 4) = pWrist;
+            TWrist(1:3, 1:3) = RWrist;
+
+            TEE = obj.forwardKinematics(q);
+        end
+
         function [angle, posList] = nullspaceAngle(obj, q)
             obj.setConfiguration(q);
-            pShoulder = osimVec3ToArray(obj.model.BodySet.get('scapphant').getPositionInGround(obj.model.state));
-            pElbow = osimVec3ToArray(obj.model.BodySet.get('ulna').getPositionInGround(obj.model.state));
-            [~, pEE, ~] = obj.model.get_mp_frame(1);
-            pEE = pEE';
+            [TShoulder, TElbow, ~, TEE] = obj.armPoseReferencePosition(q);
+            pShoulder = TShoulder(1:3,4);
+            pElbow = TElbow(1:3,4);
+            pEE= TEE(1:3,4);
 
-            posList = [pShoulder; pElbow; pEE];
+            posList = [pShoulder, pElbow, pEE];
 
             % common normal axis (shoulder-endEffetor)
             normal = pEE - pShoulder;

@@ -11,6 +11,10 @@ classdef ISpace < handle
         metadata struct = struct()
     end
 
+    properties
+        extraData struct = struct()
+    end
+
     methods
         function [data, sizeData, sizeIndex] = getData(obj)
             data = obj.data;

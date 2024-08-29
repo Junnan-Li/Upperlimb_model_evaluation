@@ -24,6 +24,9 @@ classdef IUpperLimbModel < handle
         % numeric inverse kinematics
         [q, isValid] = inverseKinematics(obj, T, qInit, options)
 
+        % pose reference position and frame
+        [TShoulder, TElbow, TWrist, TEE] = armPoseReferencePosition(obj, q)
+
         % nullspace angle
         [angle, posList] = nullspaceAngle(obj, q)
         

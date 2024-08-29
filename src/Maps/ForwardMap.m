@@ -51,7 +51,7 @@ classdef ForwardMap < IMap
             [dataQ, ~, nQ] = obj.Domain.getDataReshaped();
             [dataT, ~, nT] = obj.Codomain.getDataReshaped();
             if nQ ~= nT
-                error("ForwardMap:internalError", "The size for data is correctly initialized.")
+                error("ForwardMap:internalError", "The size for data is not correctly initialized.")
             end
             
             progressbar = ProgressbarCollection();
@@ -64,7 +64,7 @@ classdef ForwardMap < IMap
             progressbar.finishProgress(1)
             delete(progressbar)
             
-            T.setDataReshaped(dataT)
+            obj.Codomain.setDataReshaped(dataT)
         end
     end
 end
