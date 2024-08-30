@@ -64,7 +64,7 @@ classdef InverseMap < IMap
                     end
                 end
                 Ry = cross(Rz, Rx);
-                R = [Rx,Ry,Rz];
+                R = [-Ry,-Rz,Rx]; % adapt to opensim convention
 
                 rotationScalar = linspace(0, 2*pi, nRotation+1);
                 for iRotation = 1:nRotation
