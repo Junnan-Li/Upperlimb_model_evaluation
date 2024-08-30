@@ -43,10 +43,10 @@ classdef UpperLimbModelToolbox < IUpperLimbModel
             obj.model.add_marker_points('Hand_endeffector', body_name, pos_vec);
 
             % disable the clamp for the human arm
-            for i = 1: length(obj.coord_list)
-                obj.model.CoordinateSet.get(obj.coord_list{i}).set_clamped(false);
-                obj.model.CoordinateSet.get(obj.coord_list{i}).setClamped(obj.model.state,false);
-            end
+            % for i = 1: length(obj.coord_list)
+            %     obj.model.CoordinateSet.get(obj.coord_list{i}).set_clamped(true);
+            %     obj.model.CoordinateSet.get(obj.coord_list{i}).setClamped(obj.model.state,true);
+            % end
 
 
             % update the joint limit
@@ -111,13 +111,13 @@ classdef UpperLimbModelToolbox < IUpperLimbModel
                     x_d = zeros(6,1);
                     x_d(1:3) = T(1:3,4);
                     x_d(4:6) = rotm2eul(T(1:3,1:3), 'XYZ');
-                    obj.setConfiguration(qInit);
-                    [q, info] =  obj.model.IK_numeric_LM(obj.coord_list, 1, x_d);
+                    %obj.setConfiguration(qInit);
+                    [q, info] =  obj.model.IK_numeric_LM(obj.coord_list, 1, x_d, qInit);
                 otherwise
                     error("UpperLimbModelToolbox:internal", "Should not come to this branch, internal error.")
             end
 
-            q = circularState(q, obj.joint_maxPoint);
+            %q = circularState(q, obj.joint_maxPoint);
             isValid = obj.checkValidity(q);
         end
 
@@ -189,8 +189,8 @@ classdef UpperLimbModelToolbox < IUpperLimbModel
                 obj 
                 qInit
                 options.sections(1,1) double {mustBePositive} = 24
-                options.maxStep(1,1) double {mustBePositive} = 1000
-                options.stepLength(1,1) double {mustBePositive} = 0.015
+                options.maxStep(1,1) double {mustBePositive} = 150
+                options.stepLength(1,1) double {mustBePositive} = 0.03
             end
 
             nR = numel(qInit);
@@ -213,6 +213,45 @@ classdef UpperLimbModelToolbox < IUpperLimbModel
 
                 % null uses SVD to identify the nullspace vectors
                 nullvec = null(J_s);
+
+                % the dot product of nullvec and last nullvec identify if
+                % nullspace motion is on same direction.
+                direction = dot(nullvec, delta_q_last);
+                if direction < 0
+                    nullvec = -nullvec;
+                elseif direction < 0.1
+                    warning('UpperLimbModelToolbox:numeric',"Direction vector close to orthogonal! " + direction);
+                end
+                
+                % Use the q_value_temp to update
+                q_value_temp = q_s + options.stepLength * nullvec;
+                [q_value_temp, isValid, info_ik] = obj.inverseKinematics(T_init, q_value_temp);
+                q_value_temp = circularState(q_value_temp, obj.joint_maxPoint);
+                if info_ik.iter > 1
+                    delta_q_last = circularDiff(q_value_temp, q_s) / norm(circularDiff(q_value_temp, q_s));
+                else
+                    delta_q_last = nullvec;
+                end
+
+                q_s = q_value_temp;
+                
+                [angle, ~] = obj.nullspaceAngle(q_s);
+                section = floor(angle/sectionLength) + 1;
+                if stateArray(section) == -1
+                    qArray(:,section) = q_s;
+                    stateArray(section) = isValid;
+                end
+
+                if all(stateArray~=-1)
+                    break;
+                end
+            end
+
+            for iNull = 1:options.maxStep
+                J_s = obj.getGeometricJacobian(q_s);
+
+                % null uses SVD to identify the nullspace vectors
+                nullvec = -null(J_s);
 
                 % the dot product of nullvec and last nullvec identify if
                 % nullspace motion is on same direction.

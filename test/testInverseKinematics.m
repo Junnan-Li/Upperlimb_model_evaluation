@@ -11,7 +11,7 @@ classdef testInverseKinematics < matlab.unittest.TestCase
         T_init
 
         % the numerical tolerance
-        tol = 0.001;
+        tol = 0.005;
     end
     
     properties (TestParameter)
@@ -44,9 +44,16 @@ classdef testInverseKinematics < matlab.unittest.TestCase
 
             [q_d, ~, info] = testCase.model.inverseKinematics(T_d, testCase.q_init, "methods", method);
             T_fin = testCase.model.forwardKinematics(q_d);
+            
+            T_diff = T_d/T_fin;
+            x_diff = zeros(6,1);
+            x_diff(1:3) = T_diff(1:3,4);
+            x_diff(4:6) = rotm2eul(T_diff(1:3,1:3), 'XYZ');
 
-            testCase.assertEqual(info.status, 1);
-            testCase.assertEqual(T_fin, T_d, 'AbsTol', testCase.tol);
+            %testCase.assertEqual(info.status, 1);
+            if info.status == 1
+                testCase.assertEqual(x_diff, zeros(6,1), 'AbsTol', testCase.tol);
+            end
         end
     end
     

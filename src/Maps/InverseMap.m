@@ -5,8 +5,8 @@ classdef InverseMap < IMap
         function obj = InverseMap(forwardMap, gridSize, nDirection, nRotation, nSection, nMaxFlip, options)
             arguments
                 forwardMap(1,1) ForwardMap
-                gridSize(1,1) double {mustBePositive} = 0.05
-                nDirection(1,1) double {mustBePositive} = 10
+                gridSize(1,1) double {mustBePositive} = 0.10
+                nDirection(1,1) double {mustBePositive} = 8
                 nRotation(1,1) double {mustBePositive} = 3
                 nSection(1,1) double {mustBePositive} = 24
                 nMaxFlip(1,1) double {mustBePositive} = 4
@@ -131,12 +131,13 @@ classdef InverseMap < IMap
     end
 
     methods 
-        function [initialGuessList, matchCounter] = prefill(obj, options)
+        function [initialGuessList, matchCounter] = prefill(obj, positionList, options)
             % propose initial guess based on the distance we know before.
             arguments
                 obj 
+                positionList(2,1) double
                 options.positionWeight(1,1) double {mustBePositive} = 1
-                options.rotationWeight(1,1) double {mustBePositive} = 0.5
+                options.rotationWeight(1,1) double {mustBePositive} = 0.03
             end
             [dataQForward, dataSizeQ, nQ] = obj.Domain.extraData.forwardMap.Domain.getDataReshaped();
             [dataTForward, ~, ~] = obj.Domain.extraData.forwardMap.Codomain.getDataReshaped();
@@ -148,7 +149,14 @@ classdef InverseMap < IMap
             initialGuessList = zeros(dataSizeQ, nPosition,nRotation,nDirection);
 
             % expand and calculate the difference between dataTForward and dataTInverse
-            for iPosition = 1:nPosition
+            positionWeight = options.positionWeight;
+            rotationWeight = options.rotationWeight;
+            progressbar = ProgressbarCollection();
+            progressbar.setProgressMaximum(1, positionList(2)-positionList(1)+1, 'Running inverse map matching');
+            parStep = progressbar.parallelStepHandle();
+
+            positionRange = positionList(1):positionList(2);
+            for iPosition = positionRange
                 TForward = repmat(dataTForward, 1, 1, 1, nRotation, nDirection);
                 TInverse = permute(repmat(squeeze(dataTInverse(:,:,iPosition,:,:)), 1, 1, 1, 1, nQ),[1,2,5,3,4]);
                 TInverse(1:3,1:3,:,:,:) =  permute(TInverse(1:3,1:3,:,:,:), [2,1,3,4,5]);
@@ -163,21 +171,29 @@ classdef InverseMap < IMap
                 rotLog = zeros([3, size(theta)]);
                 scale_factor = theta .* 1 ./(sin(theta)/2);
                 scale_factor(theta==0) = 0;
-                rotLog(1,:,:,:) = scale_factor .* squeeze(rotdiff(3,2,:,:,:) - rotdiff(2,3,:,:,:)); 
+                rotLog(1,:,:,:) = scale_factor .* squeeze(rotdiff(3,2,:,:,:) - rotdiff(2,3,:,:,:));
                 rotLog(2,:,:,:) = scale_factor .* squeeze(rotdiff(1,3,:,:,:) - rotdiff(3,1,:,:,:));
                 rotLog(3,:,:,:) = scale_factor .* squeeze(rotdiff(2,1,:,:,:) - rotdiff(1,2,:,:,:));
 
                 posDist = sqrt(posdiff(1,:,:,:).^2 + posdiff(2,:,:,:).^2 + posdiff(3,:,:,:).^2);
                 rotDist = sqrt(rotLog(1,:,:,:).^2 + rotLog(2,:,:,:).^2 + rotLog(3,:,:,:).^2);
 
-                fullDist = squeeze(options.positionWeight*posDist + options.rotationWeight*rotDist);
+                fullDist = squeeze(positionWeight*posDist + rotationWeight*rotDist);
                 [~, I] = min(fullDist, [], 1);
-                initialGuessList(:, iPosition, :, :) = reshape(dataQForward(:, I), dataSizeQ, 1, nRotation, nDirection);
+                I = squeeze(I);
+                dataQFWD = dataQForward;
+                initialGuessList(:, iPosition, :, :) = reshape(dataQFWD(:, I), dataSizeQ, 1, nRotation, nDirection);
+
+                send(parStep, 1);
             end
+            progressbar.finishProgress(1);
+            delete(progressbar);
+
+
             matchCounter = nQ;
         end
 
-        function updateCounter = iterate(obj, initialGuessList)
+        function updateCounter = iterate(obj, initialGuessList, positionList)
             % ITERATE for a iteration based on the configuration of initialGuessList
             % if it is a new nullspace flip solution, save it 
             [dataT, ~, sizeIndexT] = obj.Domain.getData();
@@ -190,21 +206,24 @@ classdef InverseMap < IMap
             %     error("ForwardMap:internalError", "The size for initialGuessList is not correctly computed.")
             % end
 
-            nPosition = size(sizeIndexT,1);
-            nDirection = size(sizeIndexT,2);
-            nRotation = size(sizeIndexT,3);
-            nT = nPosition * nDirection * nRotation;
+            nPosition = sizeIndexT(1);
+            nDirection = sizeIndexT(2);
+            nRotation = sizeIndexT(3);
+            nT = (positionList(2)-positionList(1)+1) * nDirection * nRotation;
 
             progressbar = ProgressbarCollection();
-            progressbar.setProgressMaximum(1, nT, 'Running forward map');
+            progressbar.setProgressMaximum(1, nT, 'Running inverse map');
             parStep = progressbar.parallelStepHandle();
 
-            for iPosition = 1:nPosition
+            %modelList(1:nDirection, 1:nRotation) = UpperLimbModelToolbox();
+            model = UpperLimbModelToolbox();
+            positionRange = positionList(1):positionList(2);
+            for iPosition = positionRange
                 for iDirection = 1:nDirection
                     for iRotation = 1:nRotation
-                        model = UpperLimbModelToolbox();
+                        %model = modelList(iDirection,iRotation);
 
-                        T = dataT(iPosition, iDirection, iRotation);
+                        T = dataT(:, :, iPosition, iDirection, iRotation);
                         qInit = initialGuessList(:, iPosition, iDirection, iRotation);
                         [qArray, stateArray] = model.inverseKinematicsWithManifold(T, qInit);
 
@@ -220,6 +239,7 @@ classdef InverseMap < IMap
             
             obj.Codomain.setData(dataQ);
             obj.Codomain.extraData.solutionStatus = solutionStatus;
+            obj.Codomain.extraData.positionList = positionList;
 
             updateCounter = nT;
         end

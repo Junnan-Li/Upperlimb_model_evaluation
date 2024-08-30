@@ -1,7 +1,7 @@
 classdef ISpace < handle
     %ICODOMAIN 
     
-    properties (SetAccess = protected)
+    properties %(SetAccess = protected)
         sizeData double {mustBePositive}
 
         sizeIndex double {mustBePositive}
