@@ -1,9 +1,9 @@
-function visualAbstractArm(ax, TShoulder, TShoulder_sym, T_center, TElbow, TWrist, TEE, options)
+function visualAbstractArm(ax, TShoulder, TShoulder_sym, TCenter, TElbow, TWrist, TEE, options)
     arguments
         ax 
         TShoulder      % the right shoulder 
         TShoulder_sym  % the left symmetric shoulder
-        T_center       % the center front on chest
+        TCenter       % the center front on chest
         TElbow 
         TWrist 
         TEE 
@@ -13,14 +13,9 @@ function visualAbstractArm(ax, TShoulder, TShoulder_sym, T_center, TElbow, TWris
     
     ax.NextPlot = 'add';
 
-    TShoulder_sym = TShoulder;
-    TShoulder_sym(3,4) = -TShoulder_sym(3,4);
     plot3([TShoulder(1,4),TShoulder_sym(1,4)],[TShoulder(2,4),TShoulder_sym(2,4)],[TShoulder(3,4),TShoulder_sym(3,4)], 'Color',options.color, 'LineWidth', 5);
-
-    TCenter = eye(4);
-    TCenter(2,4) = -0.2;
     plot3([TShoulder(1,4),TCenter(1,4)],[TShoulder(2,4),TCenter(2,4)],[TShoulder(3,4),TCenter(3,4)], 'Color',options.color, 'LineWidth', 5);
-    plot3([TShoulder_sym(1,4),TCenter(1,4)],[TShoulder(2,4),TCenter(2,4)],[TShoulder_sym(3,4),TCenter(3,4)], 'Color',options.color, 'LineWidth', 5);
+    plot3([TShoulder_sym(1,4),TCenter(1,4)],[TShoulder_sym(2,4),TCenter(2,4)],[TShoulder_sym(3,4),TCenter(3,4)], 'Color',options.color, 'LineWidth', 5);
 
 
     [X_Shoulder,Y_Shoulder,Z_Shoulder] = generateSphere(options.radius*2, TShoulder(1:3, 4));

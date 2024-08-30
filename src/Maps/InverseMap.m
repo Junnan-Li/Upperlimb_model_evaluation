@@ -84,7 +84,11 @@ classdef InverseMap < IMap
                 q_init = [pi/2, 0.9750, -0.0542, 0.8215, -0.2708, 0, 0];
 
                 [TShoulder, TElbow, TWrist, TEE] = model.armPoseReferencePosition(q_init);
-                visualAbstractArm(ax, TShoulder, TElbow, TWrist, TEE)
+                TShoulder_sym = TShoulder;
+                TShoulder_sym(3,4) = -TShoulder_sym(3,4);
+                TCenter = eye(4);
+                TCenter(2,4) = -0.2;
+                visualAbstractArm(ax, TShoulder, TShoulder_sym, TCenter, TElbow, TWrist, TEE)
                 trimesh(k, x, y, z, 'EdgeColor', [0, 0, 0], 'EdgeAlpha', 0.2, 'FaceAlpha', 0);
                 scatter3(ax, gridPosition(:,1), gridPosition(:,2), gridPosition(:,3), 10, 'filled', 'o', 'MarkerFaceAlpha', 0.6, 'MarkerFaceColor', [153, 204, 255]/255, 'MarkerEdgeColor', [0,0,0]);
                 xlabel(ax,'x')
