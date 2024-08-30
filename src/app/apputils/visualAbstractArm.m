@@ -1,7 +1,9 @@
-function visualAbstractArm(ax, TShoulder, TElbow, TWrist, TEE, options)
+function visualAbstractArm(ax, TShoulder, TShoulder_sym, T_center, TElbow, TWrist, TEE, options)
     arguments
         ax 
-        TShoulder 
+        TShoulder      % the right shoulder 
+        TShoulder_sym  % the left symmetric shoulder
+        T_center       % the center front on chest
         TElbow 
         TWrist 
         TEE 
