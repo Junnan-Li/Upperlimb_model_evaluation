@@ -92,8 +92,8 @@ classdef InverseMap < IMap
                 trimesh(k, x, y, z, 'EdgeColor', [0, 0, 0], 'EdgeAlpha', 0.2, 'FaceAlpha', 0);
                 scatter3(ax, gridPosition(:,1), gridPosition(:,2), gridPosition(:,3), 10, 'filled', 'o', 'MarkerFaceAlpha', 0.6, 'MarkerFaceColor', [153, 204, 255]/255, 'MarkerEdgeColor', [0,0,0]);
                 xlabel(ax,'x')
-                ylabel(ax,'y')
-                zlabel(ax,'z')
+                ylabel(ax,'z')
+                zlabel(ax,'y')
                 axis equal
                 title(ax,"Position Visualization")
 
@@ -105,6 +105,7 @@ classdef InverseMap < IMap
                         visualFrame(ax2, gridOrientation(:, :, iDirection, iRotation),"scale", gridSize/2);
                     end
                 end
+                scatter3(ax2,0,0,0,60,'filled', 'o', 'MarkerFaceAlpha', 0.6, 'MarkerFaceColor', [153, 204, 255]/255, 'MarkerEdgeColor', [0,0,0]);
                 xlabel(ax2,'x')
                 ylabel(ax2,'y')
                 zlabel(ax2,'z')
