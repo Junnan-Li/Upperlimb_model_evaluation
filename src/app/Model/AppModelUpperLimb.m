@@ -11,7 +11,10 @@ classdef AppModelUpperLimb < handle
                                                             0.4984    0.8663   -0.0351   -0.5578;
                                                             0.0292    0.0237    0.9993    0.1899;
                                                                  0         0         0    1.0000], "visible", true), ...
-                                  'T_frame', struct("value", {{}}, "visible", true))
+                                  'T_frame', struct("value", {{}}, "visible", true),...
+                                  'convex_hull', struct("value", [], "visible", false), ...
+                                  'voxel_position',struct("value", [], "visible", false), ...
+                                  'voxel_value',struct("value", [], "visible", false))
     end
     
     events ( NotifyAccess = private ) 
@@ -20,18 +23,15 @@ classdef AppModelUpperLimb < handle
     end
 
     methods
-        function updateData(obj, q, T_EE, T_frame)
+        function updateData(obj, type, value)
             % UPDATE update the data of joint state value, end effector
             % frame and other joint frames to be displayed.
             arguments
                 obj 
-                q (7,1) double
-                T_EE (4,4) double
-                T_frame (:,1) cell
+                type (1,:) char {mustBeMember(type,{'q','T_EE','T_frame','convex_hull', 'voxel_position', 'voxel_value'})}
+                value
             end
-            obj.Data.q.value = q;
-            obj.Data.T_EE.value = T_EE;
-            obj.Data.T_frame.value = T_frame;
+            obj.Data.(type).value = value;
             notify(obj, "DataChanged")
         end
 
@@ -44,7 +44,7 @@ classdef AppModelUpperLimb < handle
             % SETVISIBILITY set the visibility of specific components
             arguments
                 obj 
-                type (:,1) char {mustBeMember(type,{'q','T_EE','T_frame'})}
+                type (1,:) char {mustBeMember(type,{'q','T_EE','T_frame','convex_hull', 'voxel_position', 'voxel_value'})}
                 value (1,1) logical
             end
             obj.Data.(type).visible = value;
@@ -55,7 +55,7 @@ classdef AppModelUpperLimb < handle
             % GETVISIBILITY get the visibility of specific components
             arguments
                 obj 
-                type (:,1) char {mustBeMember(type,{'q','T_EE','T_frame'})}
+                type (1,:) char {mustBeMember(type,{'q','T_EE','T_frame','convex_hull', 'voxel_position', 'voxel_value'})}
             end
             isVisible = obj.Data.(type).visible;
         end

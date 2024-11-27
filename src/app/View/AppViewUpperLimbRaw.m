@@ -17,7 +17,7 @@ classdef AppViewUpperLimbRaw < handle
     end
     
     methods
-        function obj = AppViewUpperLimbRaw(model, forwardMap)
+        function obj = AppViewUpperLimbRaw(model)
             % PROGRESSBARGUI The constructor of the VIEWUPPERLIMBOPENSIM
             %   PROGRESSBARGUI(model, namedArgs) create a progressbar GUI view
             %
@@ -57,11 +57,17 @@ classdef AppViewUpperLimbRaw < handle
             q = data.q.value;
             T_EE = data.T_EE.value;
             %T_frame_cell = data.T_frame.value;
+            TR = data.convex_hull.value;
+            TR_visible = data.convex_hull.visible;
+            voxel_position = data.voxel_position.value;
+            voxel_position_visible = data.voxel_position.visible;
+            voxel_value = data.voxel_value.value;
+            voxel_value_visible = data.voxel_value.visible;
 
             cla(obj.ax);
             obj.ax.NextPlot = 'add';
             
-            q = data.q.value;
+            % abstract arm
             [TShoulder, TElbow, TWrist, TEE] = obj.toolbox_model.armPoseReferencePosition(q);
             TShoulder_sym = TShoulder;
             TShoulder_sym(3,4) = -TShoulder_sym(3,4);
@@ -69,7 +75,6 @@ classdef AppViewUpperLimbRaw < handle
             TCenter(2,4) = -0.2;
 
             T_rotation = eul2tform([pi/2, 0, 0], "XYZ");
-            %T_rotation = eye(4);
             TShoulder = T_rotation * TShoulder;
             TShoulder_sym = T_rotation * TShoulder_sym;
             TCenter = T_rotation * TCenter;
@@ -80,11 +85,34 @@ classdef AppViewUpperLimbRaw < handle
 
             visualAbstractArm(obj.ax, TShoulder, TShoulder_sym, TCenter, TElbow, TWrist, TEE);
 
+            % EE frame
             visualFrame(obj.ax, T_EE, "scale", 0.15);
+
+            % Triangularzation
+            if TR_visible
+                k = TR.ConnectivityList;
+                Points = (T_rotation(1:3,1:3)* TR.Points')';
+                x = Points(:,1);
+                y = Points(:,2);
+                z = Points(:,3);
+                trimesh(k, x, y, z, 'EdgeColor', [0, 0, 0], 'EdgeAlpha', 0.3, 'FaceAlpha', 0);
+            end
+
+            % position
+            if voxel_position_visible
+                plot_position = T_rotation(1:3,1:3) * voxel_position;
+                if voxel_value_visible
+                    scatter3(obj.ax, plot_position(1,:), plot_position(2,:), plot_position(3,:), 30, voxel_value, 'filled');
+                    colormap(obj.ax,"jet")
+                    colorbar(obj.ax)
+                else
+                    scatter3(obj.ax, plot_position(1,:), plot_position(2,:), plot_position(3,:), 30, 'filled', 'o', 'MarkerFaceAlpha', 0.6, 'MarkerFaceColor', [153, 204, 255]/255, 'MarkerEdgeColor', [0,0,0])
+                end
+            end
 
             axis equal
             grid on
-            view(obj.ax,[75,23]);
+            %view(obj.ax,[75,23]);
 
             title(obj.ax,"Arm abstract visualization")
             xlabel(obj.ax,"x");
