@@ -53,6 +53,8 @@ classdef testInverseKinematics < matlab.unittest.TestCase
             %testCase.assertEqual(info.status, 1);
             if info.status == 1
                 testCase.assertEqual(x_diff, zeros(6,1), 'AbsTol', testCase.tol);
+            else
+                testCase.assumeTrue(false, "The IK does not deliver a reasonable solution")
             end
         end
     end

@@ -98,6 +98,14 @@ classdef UpperLimbModelToolbox < IUpperLimbModel
                 options.methods(1,:) char {mustBeMember(options.methods,{'CLIK','toolbox_CLIK','toolbox_LM'})} = 'toolbox_LM' 
             end
 
+            par_Struct = struct();
+            par_Struct.iter_max = 60;
+            par_Struct.retry_num = 2;
+            par_Struct.tol = [1e-3*ones(3,1);5e-3*ones(3,1)];
+            par_Struct.W_e = diag([1,1,1,1,1,1]);
+            par_Struct.W_d = 1e-4*diag(ones(numel(obj.coord_list),1));
+            par_Struct.visual = 0;
+
             switch(options.methods)
                 case "CLIK"
                     error("UpperLimbModelToolbox:internal", "Not implemented");
@@ -106,13 +114,13 @@ classdef UpperLimbModelToolbox < IUpperLimbModel
                     x_d(1:3) = T(1:3,4);
                     x_d(4:6) = rotm2eul(T(1:3,1:3), 'XYZ');
                     obj.setConfiguration(qInit);
-                    [q, info] =  obj.model.IK_numeric(obj.coord_list, 1, x_d);
+                    [q, info] =  obj.model.IK_numeric(obj.coord_list, 1, x_d, par_Struct);
                 case "toolbox_LM"
                     x_d = zeros(6,1);
                     x_d(1:3) = T(1:3,4);
                     x_d(4:6) = rotm2eul(T(1:3,1:3), 'XYZ');
-                    %obj.setConfiguration(qInit);
-                    [q, info] =  obj.model.IK_numeric_LM(obj.coord_list, 1, x_d, qInit);
+                    obj.setConfiguration(qInit);
+                    [q, info] =  obj.model.IK_numeric_LM(obj.coord_list, 1, x_d, par_Struct);
                 otherwise
                     error("UpperLimbModelToolbox:internal", "Should not come to this branch, internal error.")
             end
