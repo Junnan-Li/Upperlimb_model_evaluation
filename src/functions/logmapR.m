@@ -1,5 +1,8 @@
 function V = logmapR(R)
 %LOGMAP do the logarithmic mapping from SO3 to R3
+    arguments
+        R(3,3) double
+    end
     theta = acos((trace(R)-1)/2);
     v = 1  / (sin(theta)/2) * [R(3,2) - R(2,3); R(1,3) - R(3,1); R(2,1) - R(1,2)];
     

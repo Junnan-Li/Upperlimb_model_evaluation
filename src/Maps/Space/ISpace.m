@@ -1,7 +1,7 @@
 classdef ISpace < handle
     %ICODOMAIN 
     
-    properties (SetAccess = protected)
+    properties %(SetAccess = protected)
         sizeData double {mustBePositive}
 
         sizeIndex double {mustBePositive}
@@ -9,6 +9,10 @@ classdef ISpace < handle
         data double
 
         metadata struct = struct()
+    end
+
+    properties
+        extraData struct = struct()
     end
 
     methods

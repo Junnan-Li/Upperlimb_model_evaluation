@@ -80,5 +80,20 @@ classdef testKinematics < matlab.unittest.TestCase
             testCase.assertEqual(w_R_fin, eul2rotm(x(4:6)', "XYZ") * testCase.w_R, 'AbsTol',testCase.tol);
         end
     end
-    
+
+    methods (Test)
+        function testCheckValid(testCase)
+            q_max = testCase.model.joint_max;
+            q_min = testCase.model.joint_min;
+            q_middle = (q_max+q_min)/2;
+            q_lower = q_min - (q_max - q_min)/2;
+            q_upper = q_max + (q_max - q_min)/2;
+            
+            testCase.assertTrue(testCase.model.checkValidity(q_max))
+            testCase.assertTrue(testCase.model.checkValidity(q_min))
+            testCase.assertTrue(testCase.model.checkValidity(q_middle))
+            testCase.assertFalse(testCase.model.checkValidity(q_lower))
+            testCase.assertFalse(testCase.model.checkValidity(q_upper))
+        end
+    end 
 end

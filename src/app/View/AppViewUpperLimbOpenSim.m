@@ -8,20 +8,12 @@ classdef AppViewUpperLimbOpenSim < handle
         % Listener object used to respond dynamically to model events.
         Listener(:, 1) event.listener {mustBeScalarOrEmpty}
 
-        % the Opensim model
+        % the Opensim toolbox model
         opensim_model
-
-        % the Opensim model state
-        state
         
-        % the OpenSim coordinate
-        CoordinateSet
         % the list of coordinate for visualization
         coord_list = {'elv_angle', 'shoulder_elv', 'shoulder_rot', 'elbow_flexion',...
                       'pro_sup', 'deviation', 'flexion'};
-
-        % the Opensim visualizer
-        viz
     end
     
     methods
@@ -47,62 +39,18 @@ classdef AppViewUpperLimbOpenSim < handle
             % load the OpenSim model
             geometry_folder_path = fullfile(root_folder,"src","external","OpenSimToolbox","geometry_folder","Geometry_MoBL_ARMS");
             org.opensim.modeling.ModelVisualizer.addDirToGeometrySearchPaths(geometry_folder_path);
-            obj.opensim_model = org.opensim.modeling.Model(model_path);
-
-            % read the handles
-            obj.CoordinateSet = obj.opensim_model.getCoordinateSet();
-            MarkerSet = obj.opensim_model.getMarkerSet();
-            BodySet = obj.opensim_model.getBodySet();
+            obj.opensim_model = osim_model(model_path);
 
             % set the EE marker
-            num_marker = MarkerSet.getSize;
-            for i = 1:num_marker
-                MarkerSet.remove(MarkerSet.get(0));
-            end
-            %MarkerSet = obj.opensim_model.getMarkerSet();
-            
-            % modify the model marker for display
-            sphere_geometry = org.opensim.modeling.Sphere();
-            sphere_geometry.set_radius(0.02);
-            sphere_geometry.setColor(org.opensim.modeling.Vec3(1, 1,0));
-
-            markeri = org.opensim.modeling.Body();
-            markeri.setName('Hand_endeffector');
-            markeri.setMass(0);
-            markeri.setMassCenter(org.opensim.modeling.Vec3(0));
-            markeri.setInertia(org.opensim.modeling.Inertia(0,0,0,0,0,0));
-
-            jointi = org.opensim.modeling.WeldJoint("Weldjoint", ...
-                                BodySet.get('hand'), ...
-                                org.opensim.modeling.Vec3(0,-0.1,0), ...
-                                org.opensim.modeling.Vec3(0), ...
-                                markeri, ...
-                                org.opensim.modeling.Vec3(0, 0, 0), ...
-                                org.opensim.modeling.Vec3(0, 0, 0));
-
-            obj.opensim_model.addBody(markeri);
-            markeri.attachGeometry(sphere_geometry);
-            obj.opensim_model.addJoint(jointi);
+            obj.opensim_model.delete_all_markers;
+            body_name = {'hand'};           % name of the attached body
+            pos_vec = {org.opensim.modeling.Vec3(0,-0.1,0)};     % relative position in corresponding body frame
+            obj.opensim_model.add_marker_points('Hand_endeffector', body_name, pos_vec);
             
             % initialize the visualization window
-            obj.opensim_model.setUseVisualizer(true);
+            obj.opensim_model.set_visualize();
+            obj.opensim_model.viz.setGroundHeight(-2);
 
-            % initialize the state
-            init_state = obj.opensim_model.initSystem();
-            obj.state = init_state;
-
-            % remove the clamped characteristics
-            for i = 1: length(obj.coord_list)
-                obj.CoordinateSet.get(obj.coord_list{i}).set_clamped(false);
-                obj.CoordinateSet.get(obj.coord_list{i}).setClamped(obj.state,false);
-            end
-
-            %om.update_set(); % update all set and lists of the model
-            obj.viz = obj.opensim_model.updVisualizer().updSimbodyVisualizer();
-            obj.viz.setShowSimTime(false);
-            obj.viz.setBackgroundColor(org.opensim.modeling.Vec3(0)); % white
-            obj.viz.setGroundHeight(-1);
-            
             % Refresh the view for the first time
             obj.onDataChanged();
         end
@@ -119,15 +67,9 @@ classdef AppViewUpperLimbOpenSim < handle
             %   UPDATEDATA(obj, model) update the view accroding the the data in model
             data = model.getData();
             q = data.q.value;
-            obj.CoordinateSet = obj.opensim_model.getCoordinateSet();
-
-            for i = 1: length(obj.coord_list)
-                value_i = q(i);
-                obj.CoordinateSet.get(obj.coord_list{i}).setValue(obj.state,value_i);
-            end
-
-            % update the visualization window
-            obj.opensim_model.getVisualizer().show(obj.state);
+            
+            obj.opensim_model.set_coordinate_value(obj.coord_list,q);
+            obj.opensim_model.model_visualize();
         end
     end
 end

@@ -24,5 +24,37 @@ classdef SE3 < ISpace
             obj.data = reshape(data,[obj.sizeData, obj.sizeIndex]);
         end
     end
+
+    methods
+        function [sizeData, sizeIndex] = activeDiscretize(obj, gridPosition, gridOrientation)
+            arguments
+                obj 
+                gridPosition(:,3) double
+                gridOrientation(4,4,:,:) double
+            end
+            
+            nPosition = size(gridPosition,1);
+            nDirection = size(gridOrientation, 3);
+            nRotation = size(gridOrientation, 4);
+            obj.sizeIndex = [nPosition, nDirection, nRotation];
+            obj.discretize(obj.sizeIndex);
+
+            obj.metadata.position = gridPosition;
+            obj.metadata.orientation = gridOrientation;
+
+            for iPosition=1:nPosition
+                for iDirection=1:nDirection
+                    for iRotation=1:nRotation
+                        Tframe = gridOrientation(:,:,iDirection,iRotation);
+                        Tframe(1:3,4) = Tframe(1:3,4) + gridPosition(iPosition,:)';
+                        obj.data(:,:,iPosition,iDirection,iRotation) = Tframe;
+                    end
+                end
+            end
+
+            sizeData = obj.sizeData;
+            sizeIndex = obj.sizeIndex;
+        end
+    end
 end
 
